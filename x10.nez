@@ -141,7 +141,7 @@ example Statement atomic {}
 example Statement when(exp) {}
 
 /* Expressions */
-Arguments                 = { '()' #Stub }
+Arguments                 = { '(' _ ArgumentList _ ')' #Stub }
 Expression                = AssignmentExpression
 AssignmentExpression               = { $left(LeftHandSideExpression) _ _AssignmentOperator _ $right(AssignmentExpression) }
                                    / ConditionalExpression
@@ -193,7 +193,9 @@ addInc                             = "++" #Inc
 addDec                             = "--" #Dec
 PrimaryExpression                  = Literal
                                    / "(" Expression ")"
-                                   / <if !IncetanceCreation> InstanceCreationExpression
+                                   / InstanceCreationExpression
+                                   / { "[" _ $(ArgumentList)? _ "]" #ArrayConstraction }
+                                   / ClosureExp
                                    / Identifier
                                    / { "this" #This }
                                    / { $(Type) "." "this" #This }
@@ -207,7 +209,11 @@ Field                              = { $({"super" #Super}) "." $(Identifier) #Fi
                                    / { $(Type) "." $({"super" #Super}) "." $(Identifier) #Field }
 
 AtExpression                       = { "at" _ "(" _ Expression _ ")" _ Statement #At }
+ArgumentList                       = { Expression (_ "," _ Expression)* #List }
 
+ClosureExp                         = { $(Formals) _ "=>" _ $(ClosureBody) }
+ClosureBody                        = { $(Expression) #Body }
+                                   / { $(Annotations)? _ $(Block) #Body }
 
 example Expression ID
 example Expression 1
