@@ -231,7 +231,7 @@ InstanceCreationExpression         = { "new" _ $(Type / Identifier) (_ $(TypeArg
 Field                              = { $({"super" #Super}) "." $(Identifier) #Field }
                                    / { $(Type) "." $({"super" #Super}) "." $(Identifier) #Field }
 
-AtExpression                       = { "at" _ "(" _ Expression _ ")" _ Statement #At }
+AtExpression                       = { "at" _ "(" _ Expression _ ")" _ ClosureBody #At }
 ArgumentList                       = { Expression (_ "," _ Expression)* #List }
 
 ClosureExp                         = { $(Formals) (_ $(Guard))? (_ $(HasResultType)?) _ "=>" _ $(ClosureBody) #ClosureExpression }
