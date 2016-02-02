@@ -164,11 +164,12 @@ StatementExpressionList   = { $(StatementExpression) (_ "," _ $(StatementExpress
 StatementExpression       = Expression
 
 /* Expressions */
-Arguments                 = { '(' _ ArgumentList _ ')' #Stub }
-Expression                = AssignmentExpression
+Arguments                          = '(' _ $(ArgumentList)? _ ')'
+ArgumentList                       = { Expression (_ "," _ Expression)* #List }
+Expression                         = AssignmentExpression
 AssignmentExpression               = { $left(LeftHandSideExpression) _ _AssignmentOperator _ $right(AssignmentExpression) }
                                    / ConditionalExpression
-LeftHandSideExpression = Identifier
+LeftHandSideExpression             = Identifier
 _AssignmentOperator                = "=" #Assign
                                    / "*=" #AssignMul
                                    / "/=" #AssignDiv
@@ -207,9 +208,8 @@ UnaryExpression                    = PostfixExpression
                                    / { "~" $expr(CastNewExpression) #Compl }
                                    / { "!" $expr(CastNewExpression) #Not }
 PostfixExpression                  = PrimaryExpression {$ addMethodCall / addInstanceCreation / addIndex / addField / addInc / addDec }*
-addMethodCall                      = "." $(TypeArguments)? $(Identifier) $({ "(" addArgumentExpressionList? ")" #List }) #Method
-addInstanceCreation                = "." "new" _ $(Type / Identifier) (_ $(TypeArguments))? _ $({ "(" addArgumentExpressionList? ")" #List }) $(_ Block)? #InstanceCreation
-addArgumentExpressionList          = $(Expression) ( "," $(Expression) )*
+addMethodCall                      = "." $(TypeArguments)? $(Identifier) Arguments #Method
+addInstanceCreation                = "." "new" _ $(Type / Identifier) (_ $(TypeArguments))? _ Arguments $(_ Block)? #InstanceCreation
 addIndex                           = "[" $(Expression) "]" #Index
 addField                           = "." $(Identifier) !'(' #Field
 addInc                             = "++" #Inc
@@ -226,13 +226,12 @@ PrimaryExpression                  = Literal
                                    / Field
                                    / Type
 
-InstanceCreationExpression         = { "new" _ $(Type / Identifier) (_ $(TypeArguments))? _ $({ "(" addArgumentExpressionList? ")" #List }) $(_ Block)? #InstanceCreation }
+InstanceCreationExpression         = { "new" _ $(Type / Identifier) (_ $(TypeArguments))? _ Arguments $(_ Block)? #InstanceCreation }
 
 Field                              = { $({"super" #Super}) "." $(Identifier) #Field }
                                    / { $(Type) "." $({"super" #Super}) "." $(Identifier) #Field }
 
 AtExpression                       = { "at" _ "(" _ Expression _ ")" _ ClosureBody #At }
-ArgumentList                       = { Expression (_ "," _ Expression)* #List }
 
 ClosureExp                         = { $(Formals) (_ $(Guard))? (_ $(HasResultType)?) _ "=>" _ $(ClosureBody) #ClosureExpression }
 ClosureBody                        = { $(Expression) #Body }
