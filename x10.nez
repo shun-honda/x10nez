@@ -170,7 +170,7 @@ relationalOperator                 = "<=" #LessThanEquals
                                    / ">=" #GreaterThanEquals
                                    / "<" #LessThan
                                    / ">" #GreaterThan
-RelationalExpression               = ShiftExpression {$left _ relationalOperator _ $right(ShiftExpression) / _ "instanceof" $right(Type) #InstanceOf }*
+RelationalExpression               = ShiftExpression {$left _ relationalOperator _ $right(ShiftExpression) / _ "instanceof" _ $right(Type) #InstanceOf / _ "as" _ $right(Type) #As }*
 ShiftExpression                    = AdditiveExpression {$left _ ("<<" #LeftShift / ">>" #ArithmeticRightShift / ">>>" #LogicalRightShift) _ $right(AdditiveExpression) }*
 AdditiveExpression                 = MultiplicativeExpression {$left _ ("+" #Add / "-" #Sub) _ $right(MultiplicativeExpression) }*
 MultiplicativeExpression           = CastNewExpression {$left _ ("*" #Mul / "/" #Div / "%" #Mod) _ $right(CastNewExpression) }*
@@ -183,23 +183,31 @@ UnaryExpression                    = PostfixExpression
                                    / { "-" $expr(CastNewExpression) #Minus }
                                    / { "~" $expr(CastNewExpression) #Compl }
                                    / { "!" $expr(CastNewExpression) #Not }
-PostfixExpression                  = PrimaryExpression {$ addMethodCall / addInstanceCreation / addIndex / addField / addMethodReference / addInc / addDec }*
+PostfixExpression                  = PrimaryExpression {$ addMethodCall / addInstanceCreation / addIndex / addField / addInc / addDec }*
 addMethodCall                      = "." $(TypeArguments)? $(Identifier) $({ "(" addArgumentExpressionList? ")" #List }) #Method
-addInstanceCreation                = "." "new" $(TypeArguments)? $(Annotations)? $(ClassOrInterfaceType) $({ "(" addArgumentExpressionList? ")" #List }) $(ClassBody)? #InstanceCreation
+addInstanceCreation                = "." "new" _ $(Type / Identifier) (_ $(TypeArguments))? _ $({ "(" addArgumentExpressionList? ")" #List }) $(_ Block)? #InstanceCreation
 addArgumentExpressionList          = $(Expression) ( "," $(Expression) )*
 addIndex                           = "[" $(Expression) "]" #Index
 addField                           = "." $(Identifier) !'(' #Field
-addMethodReference                 = "::" $(TypeArguments)? $(Identifier) #MethodReference
 addInc                             = "++" #Inc
 addDec                             = "--" #Dec
 PrimaryExpression                  = Literal
                                    / "(" Expression ")"
-                                   / InstanceCreationExpression
+                                   / <if !IncetanceCreation> InstanceCreationExpression
                                    / Identifier
+                                   / { "this" #This }
+                                   / { $(Type) "." "this" #This }
+                                   / AtExpression
+                                   / Field
                                    / Type
 
-InstanceCreationExpression         = { "new" _ $(Type / Identifier) (_ $(TypeArguments))? _ $({ "(" addArgumentExpressionList? ")" #List }) $(_ ClassBody)? #InstanceCreation }
-                                   / { $(Primary) "." "new" _ $(Type / Identifier) (_ $(TypeArguments))? _ $({ "(" addArgumentExpressionList? ")" #List }) $(_ ClassBody)? #InstanceCreation }
+InstanceCreationExpression         = { "new" _ $(Type / Identifier) (_ $(TypeArguments))? _ $({ "(" addArgumentExpressionList? ")" #List }) $(_ Block)? #InstanceCreation }
+
+Field                              = { $({"super" #Super}) "." $(Identifier) #Field }
+                                   / { $(Type) "." $({"super" #Super}) "." $(Identifier) #Field }
+
+AtExpression                       = { "at" _ "(" _ Expression _ ")" _ Statement #At }
+
 
 example Expression ID
 example Expression 1
